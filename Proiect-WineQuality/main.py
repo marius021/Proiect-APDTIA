@@ -1,15 +1,17 @@
-# Importăm bibliotecile necesare
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.cluster import KMeans
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from imblearn.over_sampling import SMOTE  # Importăm SMOTE pentru oversampling
+
+
+os.environ["LOKY_MAX_CPU_COUNT"] = "4"
 
 # 1. Încărcarea și analiza exploratorie a datelor
 df = pd.read_csv('winequality.csv')
@@ -18,6 +20,7 @@ df = pd.read_csv('winequality.csv')
 print(df.describe())
 
 # Distribuția variabilei țintă
+plt.figure()
 sns.histplot(df['quality'], bins=10, kde=True)
 plt.title("Distribuția calității vinului")
 plt.xlabel("Quality")
@@ -46,84 +49,42 @@ y = df['quality']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# 4. Crearea și ajustarea modelelor
-# a. KNN
-best_k = 1
-best_knn_accuracy = 0
-for k in range(1, 11):
-    knn = KNeighborsClassifier(n_neighbors=k)
-    knn.fit(X_train, y_train)
-    y_pred = knn.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    print(f"KNN k={k}, Accuracy={acc:.4f}")
-    if acc > best_knn_accuracy:
-        best_k = k
-        best_knn_accuracy = acc
+# 4. Verificarea și ajustarea pentru dezechilibrul claselor
+# Verificăm distribuția claselor
+sns.histplot(y_train)
+plt.title("Distribuția claselor din setul de antrenament")
+plt.show()
 
-# b. SVM
-best_kernel = ''
-best_svm_accuracy = 0
-for kernel in ['linear', 'poly', 'rbf', 'sigmoid']:
-    svm = SVC(kernel=kernel)
-    svm.fit(X_train, y_train)
-    y_pred = svm.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    print(f"SVM Kernel={kernel}, Accuracy={acc:.4f}")
-    if acc > best_svm_accuracy:
-        best_kernel = kernel
-        best_svm_accuracy = acc
+# Aplicăm SMOTE pentru a echilibra setul de date de antrenament
+smote = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
-# c. MLP
-best_mlp_config = {}
-best_mlp_accuracy = 0
-for max_iter in [200, 400, 600]:
-    for hidden_layer_sizes in [(50,), (100,), (50, 50)]:
-        mlp = MLPClassifier(max_iter=max_iter, hidden_layer_sizes=hidden_layer_sizes)
-        mlp.fit(X_train, y_train)
-        y_pred = mlp.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        print(f"MLP max_iter={max_iter}, hidden_layer_sizes={hidden_layer_sizes}, Accuracy={acc:.4f}")
-        if acc > best_mlp_accuracy:
-            best_mlp_config = {'max_iter': max_iter, 'hidden_layer_sizes': hidden_layer_sizes}
-            best_mlp_accuracy = acc
+# 5. Crearea și antrenarea modelului MLP
+mlp = MLPClassifier(max_iter=1000, hidden_layer_sizes=(100,), random_state=42)
+mlp.fit(X_train_resampled, y_train_resampled)
 
-# 5. Construirea modelelor finale
-final_knn = KNeighborsClassifier(n_neighbors=best_k)
-final_knn.fit(X_train, y_train)
+# 6. Prezicerea și evaluarea performanței modelului
+y_pred = mlp.predict(X_test)
 
-final_svm = SVC(kernel=best_kernel)
-final_svm.fit(X_train, y_train)
-
-final_mlp = MLPClassifier(**best_mlp_config)
-final_mlp.fit(X_train, y_train)
-
-# 6. Testarea și validarea modelelor
-print("\n### Validarea modelelor ###\n")
-
-# KNN
-y_pred_knn = final_knn.predict(X_test)
-print("KNN Classification Report:")
-print(classification_report(y_test, y_pred_knn))
-
-# SVM
-y_pred_svm = final_svm.predict(X_test)
-print("SVM Classification Report:")
-print(classification_report(y_test, y_pred_svm))
-
-# MLP
-y_pred_mlp = final_mlp.predict(X_test)
+# Raportul de clasificare cu zero_division=1 pentru a evita eroarea de precizie
 print("MLP Classification Report:")
-print(classification_report(y_test, y_pred_mlp))
+print(classification_report(y_test, y_pred, zero_division=1))
 
-# Linear Regression (opțional, pentru predicția quality)
+# Alte metrice de evaluare
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.4f}")
+
+# 7. Evaluarea performanței modelului cu MSE și R2 (pentru regresie liniară)
 lr_model = LinearRegression()
 lr_model.fit(X_train, y_train)
 y_pred_lr = lr_model.predict(X_test)
+
 mse = mean_squared_error(y_test, y_pred_lr)
 r2 = r2_score(y_test, y_pred_lr)
 print(f"\nLinear Regression - MSE: {mse:.4f}, R2 Score: {r2:.4f}")
 
-# Clustering (K-means)
+# 8. Clustering cu K-means
+from sklearn.cluster import KMeans
 kmeans = KMeans(n_clusters=3, random_state=42)
 clusters = kmeans.fit_predict(X)
 df['Cluster'] = clusters
