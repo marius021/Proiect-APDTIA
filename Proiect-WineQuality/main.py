@@ -20,10 +20,10 @@ plt.title("Heatmap of Feature Correlations")
 plt.show()
 
 # 2. Curățarea/preprocesarea datelor
-# Verificarea valorilor lipsă
+# se verifica valorile lipsa
 print(df.isnull().sum())
 
-# Eliminarea valorilor lipsă (daca este cazul)
+# se elimina valorile lipsa
 df.dropna(inplace=True)
 
 # 3. Împărțirea datelor într-un set de antrenament și un set de testare
