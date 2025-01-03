@@ -70,9 +70,3 @@ plt.show()
 # Salvarea rezultatelor
 df.to_csv('winequality_with_clusters.csv', index=False)
 
-#citeste read-me file pentru modificari
-#
-#
-# este necesara testarea fiecarei cerinte in parte
-#
-#
