@@ -24,11 +24,26 @@ print(f"Cluster Centers: \n{kmeans.cluster_centers_}")
 silhouette_avg = silhouette_score(X, kmeans.labels_)
 print(f"Silhouette Score: {silhouette_avg}")
 
-# Vizualizarea clusterelor
-sns.scatterplot(x='alcohol', y='volatile acidity', hue='Cluster', data=df, palette='viridis')
-plt.title("K-means Clustering of Wine Data")
+# Sampling pentru reducerea numărului de puncte afișate
+sampled_df = df.sample(frac=0.1, random_state=42)  # ia 10% din date
+
+# Calcularea centroidelor
+centroids = kmeans.cluster_centers_
+
+# Vizualizarea clusterelor cu sampling și evidențierea centroidelor
+sns.scatterplot(
+    x='alcohol', y='volatile acidity', hue='Cluster', 
+    data=sampled_df, palette='viridis', alpha=0.7
+)
+plt.scatter(
+    centroids[:, X.columns.get_loc('alcohol')], 
+    centroids[:, X.columns.get_loc('volatile acidity')], 
+    c='red', marker='X', s=50, label='Centroids'
+)
+plt.title("K-means Clustering with Sampled Data and Centroids")
 plt.xlabel("Alcohol")
 plt.ylabel("Volatile Acidity")
+plt.legend()
 plt.show()
 
 # Salvarea rezultatelor
