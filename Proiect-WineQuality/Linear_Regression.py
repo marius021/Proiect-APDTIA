@@ -1,10 +1,30 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
 # se citesc datele
 df = pd.read_csv('winequality.csv')
+
+# explorarea setului de date
+print("Informații despre setul de date:")
+print(df.info())
+print("\nStatistici descriptive:")
+print(df.describe())
+
+# vizualizarea corelatiilor dintre variabile
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Heatmap of Feature Correlations")
+plt.show()
+
+# verificarea valorilor lipsă
+print("\nNumărul valorilor lipsă pe fiecare coloană:")
+print(df.isnull().sum())
+
+# eliminarea valorilor lipsă
+df.dropna(inplace=True)
 
 # preprocesare
 df.dropna(inplace=True)
