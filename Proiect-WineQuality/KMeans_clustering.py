@@ -4,33 +4,33 @@ from sklearn.metrics import silhouette_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Citirea datelor
+# se citesc datele
 df = pd.read_csv('winequality.csv')
 
-# Preprocesare
+# preprocesare
 df.dropna(inplace=True)
 X = df.drop(columns=['quality'])
 
-# Aplicarea K-means pentru clustering
+# se aplica K-means 
 n_clusters = 3
 kmeans = KMeans(n_clusters=n_clusters, random_state=42)
 kmeans.fit(X)
 
-# Afișarea rezultatelor clusteringului
+# afisare rezultate
 df['Cluster'] = kmeans.labels_
 print(f"Cluster Centers: \n{kmeans.cluster_centers_}")
 
-# Calcularea Silhouette Score
+# calcularea Silhouette Score
 silhouette_avg = silhouette_score(X, kmeans.labels_)
 print(f"Silhouette Score: {silhouette_avg}")
 
-# Sampling pentru reducerea numărului de puncte afișate
+# sampling pentru reducerea numarului de puncte afisate
 sampled_df = df.sample(frac=0.1, random_state=42)  # ia 10% din date
 
-# Calcularea centroidelor
+# calcularea centroidelor
 centroids = kmeans.cluster_centers_
 
-# Vizualizarea clusterelor cu sampling și evidențierea centroidelor
+# vizualizarea clusterelor cu sampling si evidentierea centroidelor
 sns.scatterplot(
     x='alcohol', y='volatile acidity', hue='Cluster', 
     data=sampled_df, palette='viridis', alpha=0.7
@@ -46,5 +46,5 @@ plt.ylabel("Volatile Acidity")
 plt.legend()
 plt.show()
 
-# Salvarea rezultatelor
+# salvarea rezultatelor
 df.to_csv('winequality_with_clusters.csv', index=False)
